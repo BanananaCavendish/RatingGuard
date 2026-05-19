@@ -1,0 +1,39 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# 环境文件
+.env
+!.env.example
+
+# 日志
+logs/
+*.log
+
+# 数据库（本地测试生成，生产使用 Docker volume）
+*.db
+*.db-wal
+*.db-shm
+
+# 虚拟环境
+venv/
+.venv/
+env/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

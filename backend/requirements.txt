@@ -1,0 +1,26 @@
+# ============================================================
+# RatingGuard 依赖清单
+# 安装：pip install -r requirements.txt
+# ============================================================
+
+# ---------- HTTP 请求与爬虫 ----------
+requests>=2.31.0
+beautifulsoup4>=4.12.0
+lxml>=5.1.0
+
+# ---------- 配置管理 ----------
+python-dotenv>=1.0.0
+
+# ---------- 数据建模 ----------
+pydantic>=2.0.0
+
+# ---------- LLM SDK（ai_agent.py 必需） ----------
+openai>=1.0.0               # 对接 DeepSeek / OpenAI 的统一 SDK
+httpx>=0.27.0               # DeepSeek 驱动（ai_chain/deepseek_driver.py 需要）
+
+# ---------- 数据库 ----------
+aiosqlite>=0.20.0           # 异步 SQLite（database.py 需要）
+
+# ---------- Web 服务（main.py 必需） ----------
+fastapi>=0.115.0            # 异步 Web 框架
+uvicorn[standard]>=0.30.0   # ASGI 服务器

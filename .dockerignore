@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+dist/
+build/
+
+# Env
+.env
+
+# Logs
+logs/
+*.log
+
+# Docker
+.dockerignore
+
+# Git
+.git
+.gitignore
+README*.md
+LICENSE
