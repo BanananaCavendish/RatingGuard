@@ -142,7 +142,7 @@ flowchart LR
     H -->|done event| K[📋 Analysis Cards]
     H -->|done event| L[📧 Email Preview]
     L --> M[📋 Copy to Clipboard]
-    L --> N[✈️ Send Email (Mock)]
+    L --> N[✈️ Mock Send Email]
 
     G -->|done + review_id| D
 

@@ -142,7 +142,7 @@ flowchart LR
     H -->|done 事件| K[📋 分析卡片]
     H -->|done 事件| L[📧 邮件预览]
     L --> M[📋 复制到剪贴板]
-    L --> N[✈️ 发送邮件 (模拟)]
+    L --> N[✈️ 模拟发送邮件]
 
     G -->|done + review_id| D
 
