@@ -7,8 +7,10 @@ import type { StreamResult } from "@/hooks/useRecoveryStream";
 import type { ProductReview } from "@/lib/api";
 
 /* ═══════════════════════════════════════════════════════════════
-   商品 URL 输入栏（替代 Mock 数据）
+   输入模式切换 + 商品 URL 输入栏
    ═══════════════════════════════════════════════════════════════ */
+
+type InputMode = "scrape" | "manual";
 
 function ProductUrlBar({
   onScrape,
@@ -60,6 +62,163 @@ function ProductUrlBar({
               <path d="M21 21l-6-6m2-5a7 7 0 1 1-14 0 7 7 0 0 1 14 0z" />
             </svg>
             抓取
+          </>
+        )}
+      </button>
+    </form>
+  );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   手动输入差评表单（免爬虫，直接粘贴差评文本）
+   ═══════════════════════════════════════════════════════════════ */
+
+const COUNTRY_OPTIONS = [
+  { code: "US", label: "🇺🇸 美国" },
+  { code: "GB", label: "🇬🇧 英国" },
+  { code: "JP", label: "🇯🇵 日本" },
+  { code: "DE", label: "🇩🇪 德国" },
+  { code: "FR", label: "🇫🇷 法国" },
+  { code: "IT", label: "🇮🇹 意大利" },
+  { code: "ES", label: "🇪🇸 西班牙" },
+  { code: "KR", label: "🇰🇷 韩国" },
+  { code: "BR", label: "🇧🇷 巴西" },
+  { code: "AU", label: "🇦🇺 澳大利亚" },
+  { code: "NL", label: "🇳🇱 荷兰" },
+];
+
+function ManualReviewForm({
+  onSubmit,
+  isAnalyzing,
+}: {
+  onSubmit: (params: {
+    review_text: string;
+    country_code: string;
+    customer_name: string;
+    rating: number;
+    product_title: string;
+  }) => void;
+  isAnalyzing: boolean;
+}) {
+  const [text, setText] = useState("");
+  const [country, setCountry] = useState("US");
+  const [name, setName] = useState("");
+  const [rating, setRating] = useState(3);
+  const [product, setProduct] = useState("");
+
+  const handleSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      if (!text.trim() || isAnalyzing) return;
+      onSubmit({
+        review_text: text.trim(),
+        country_code: country,
+        customer_name: name.trim() || "Valued Customer",
+        rating,
+        product_title: product.trim(),
+      });
+    },
+    [text, country, name, rating, product, isAnalyzing, onSubmit]
+  );
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-3">
+      {/* 差评内容 */}
+      <div>
+        <label className="mb-1 block text-xs text-gray-500">差评内容 *</label>
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="从卖家后台复制一条差评粘贴到这里..."
+          rows={4}
+          className="w-full resize-none rounded-lg border border-gray-800 bg-gray-900/50 px-3.5 py-2.5 text-sm text-gray-200 placeholder-gray-600 outline-none transition-colors focus:border-accent/50 focus:bg-gray-900"
+          disabled={isAnalyzing}
+        />
+      </div>
+
+      {/* 评分 */}
+      <div>
+        <label className="mb-1 block text-xs text-gray-500">评分</label>
+        <div className="flex gap-1">
+          {[1, 2, 3, 4, 5].map((n) => (
+            <button
+              key={n}
+              type="button"
+              onClick={() => setRating(n)}
+              className={`h-8 w-8 rounded-md text-sm transition-colors ${
+                n <= rating
+                  ? "text-amber-400 bg-amber-400/10"
+                  : "text-gray-600 bg-gray-800/50"
+              }`}
+              disabled={isAnalyzing}
+            >
+              ★
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 客户名称 + 国家 */}
+      <div className="flex gap-2">
+        <div className="flex-1">
+          <label className="mb-1 block text-xs text-gray-500">客户名称</label>
+          <input
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="可选"
+            className="w-full rounded-lg border border-gray-800 bg-gray-900/50 px-3.5 py-2 text-sm text-gray-200 placeholder-gray-600 outline-none transition-colors focus:border-accent/50"
+            disabled={isAnalyzing}
+          />
+        </div>
+        <div className="w-32">
+          <label className="mb-1 block text-xs text-gray-500">国家/地区</label>
+          <select
+            value={country}
+            onChange={(e) => setCountry(e.target.value)}
+            className="w-full rounded-lg border border-gray-800 bg-gray-900/50 px-3 py-2 text-sm text-gray-200 outline-none transition-colors focus:border-accent/50"
+            disabled={isAnalyzing}
+          >
+            {COUNTRY_OPTIONS.map((o) => (
+              <option key={o.code} value={o.code}>{o.label}</option>
+            ))}
+          </select>
+        </div>
+      </div>
+
+      {/* 商品标题 */}
+      <div>
+        <label className="mb-1 block text-xs text-gray-500">商品标题</label>
+        <input
+          type="text"
+          value={product}
+          onChange={(e) => setProduct(e.target.value)}
+          placeholder="可选，帮助 AI 更精准分析"
+          className="w-full rounded-lg border border-gray-800 bg-gray-900/50 px-3.5 py-2 text-sm text-gray-200 placeholder-gray-600 outline-none transition-colors focus:border-accent/50"
+          disabled={isAnalyzing}
+        />
+      </div>
+
+      <button
+        type="submit"
+        disabled={isAnalyzing || !text.trim()}
+        className={`btn-glow inline-flex w-full items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-all duration-200 ${
+          isAnalyzing
+            ? "border-gray-800 bg-gray-800/50 text-gray-500 cursor-not-allowed"
+            : "border-accent/40 bg-accent/10 text-accent-light hover:bg-accent/20"
+        }`}
+      >
+        {isAnalyzing ? (
+          <>
+            <span className="inline-block h-3.5 w-3.5 animate-spin rounded-full border-2 border-gray-600 border-t-accent" />
+            分析中…
+          </>
+        ) : (
+          <>
+            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+              <path d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            开始分析
           </>
         )}
       </button>
@@ -470,13 +629,13 @@ function RecoveryPanel({
   result: StreamResult | null;
   error: string | null;
 }) {
-  // 空状态：未选择评论
-  if (!selectedReview) {
+  // 空状态：未选择评论，也没有流式内容
+  if (!selectedReview && !isStreaming && !result && !streamedText) {
     return (
       <div className="flex h-full min-h-[400px] flex-col items-center justify-center rounded-xl border border-dashed border-gray-800 text-center">
         <div className="mb-4 text-4xl text-gray-700">📋</div>
         <p className="text-sm text-gray-500">
-          从左侧选择一条差评开始分析
+          抓取差评或手动粘贴开始分析
         </p>
       </div>
     );
@@ -526,6 +685,8 @@ function RecoveryPanel({
    ═══════════════════════════════════════════════════════════════ */
 
 export default function HomePage() {
+  const [inputMode, setInputMode] = useState<InputMode>("scrape");
+
   const {
     reviews,
     isLoading,
@@ -545,7 +706,7 @@ export default function HomePage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // 选择评论 → 触发流式分析
+  // 选择已有评论 → 触发流式分析
   const handleSelectReview = useCallback(
     (review: ProductReview) => {
       selectReview(review);
@@ -559,6 +720,25 @@ export default function HomePage() {
     [selectReview, startStream]
   );
 
+  // 手动输入差评 → 直接流式分析
+  const handleManualSubmit = useCallback(
+    (params: {
+      review_text: string;
+      country_code: string;
+      customer_name: string;
+      rating: number;
+      product_title: string;
+    }) => {
+      selectReview(null); // 清除选择，但 RecoveryPanel 会因 isStreaming 继续展示
+      startStream({
+        review_text: params.review_text,
+        country_code: params.country_code,
+        customer_name: params.customer_name,
+      });
+    },
+    [selectReview, startStream]
+  );
+
   // 错误优先显示：流式错误 > 抓取错误
   const displayError = streamError || scrapeError;
 
@@ -567,7 +747,6 @@ export default function HomePage() {
       {/* ── 顶部导航 ── */}
       <header className="mb-6 flex items-center justify-between">
         <div className="flex items-center gap-3">
-          {/* Logo */}
           <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-accent to-blue-500 text-sm font-bold text-white shadow-lg shadow-accent/20">
             RG
           </div>
@@ -578,63 +757,82 @@ export default function HomePage() {
         </div>
 
         <div className="flex items-center gap-3">
-          {/* 状态指示器 */}
           <div className="flex items-center gap-1.5 rounded-full border border-gray-800 bg-gray-900/80 px-3 py-1 text-xs text-gray-500">
             <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
             System Online
           </div>
-          {/* 设置占位 */}
-          <button
-            type="button"
-            className="rounded-lg border border-gray-800 p-2 text-gray-500 transition-colors hover:border-gray-700 hover:text-gray-300"
-            title="Settings"
-          >
-            <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
-              <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
-              <circle cx="12" cy="12" r="3" />
-            </svg>
-          </button>
         </div>
       </header>
 
       {/* ── 主体：双栏布局 ── */}
       <div className="flex flex-1 flex-col gap-4 lg:flex-row lg:gap-6">
-        {/* ========== 左侧：评论列表 ========== */}
+        {/* ========== 左侧：输入区 ========== */}
         <aside className="w-full space-y-3 lg:w-[360px] xl:w-[400px]">
-          {/* 商品 URL 输入栏 */}
-          <ProductUrlBar onScrape={scrapeProduct} isScraping={isScraping} />
-
-          <div className="flex items-center justify-between">
-            <h2 className="text-sm font-semibold text-gray-400">
-              待处理差评
-            </h2>
-            <span className="rounded-md bg-gray-800 px-2 py-0.5 text-xs text-gray-500">
-              {reviews.length}
-            </span>
+          {/* 模式切换标签页 */}
+          <div className="flex rounded-lg border border-gray-800 bg-gray-900/30 p-0.5">
+            <button
+              type="button"
+              onClick={() => setInputMode("scrape")}
+              className={`flex-1 rounded-md py-2 text-sm font-medium transition-all ${
+                inputMode === "scrape"
+                  ? "bg-gray-800 text-gray-200 shadow-sm"
+                  : "text-gray-500 hover:text-gray-300"
+              }`}
+            >
+              🔗 抓取
+            </button>
+            <button
+              type="button"
+              onClick={() => setInputMode("manual")}
+              className={`flex-1 rounded-md py-2 text-sm font-medium transition-all ${
+                inputMode === "manual"
+                  ? "bg-gray-800 text-gray-200 shadow-sm"
+                  : "text-gray-500 hover:text-gray-300"
+              }`}
+            >
+              ✏️ 手动输入
+            </button>
           </div>
 
-          <div className="space-y-2.5 overflow-y-auto" style={{ maxHeight: "calc(100vh - 200px)" }}>
-            {isLoading ? (
-              <div className="flex items-center justify-center py-12 text-sm text-gray-500">
-                <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-gray-700 border-t-accent mr-2" />
-                加载中…
+          {inputMode === "scrape" ? (
+            <>
+              <ProductUrlBar onScrape={scrapeProduct} isScraping={isScraping} />
+
+              <div className="flex items-center justify-between">
+                <h2 className="text-sm font-semibold text-gray-400">待处理差评</h2>
+                <span className="rounded-md bg-gray-800 px-2 py-0.5 text-xs text-gray-500">
+                  {reviews.length}
+                </span>
               </div>
-            ) : reviews.length === 0 ? (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <p className="text-sm text-gray-600">暂无差评数据</p>
-                <p className="mt-1 text-xs text-gray-700">在上方输入商品 URL 开始抓取</p>
+
+              <div className="space-y-2.5 overflow-y-auto" style={{ maxHeight: "calc(100vh - 260px)" }}>
+                {isLoading ? (
+                  <div className="flex items-center justify-center py-12 text-sm text-gray-500">
+                    <span className="inline-block h-4 w-4 animate-spin rounded-full border-2 border-gray-700 border-t-accent mr-2" />
+                    加载中…
+                  </div>
+                ) : reviews.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center py-12 text-center">
+                    <p className="text-sm text-gray-600">暂无差评数据</p>
+                    <p className="mt-1 text-xs text-gray-700">在上方输入商品 URL 开始抓取</p>
+                  </div>
+                ) : (
+                  reviews.map((review) => (
+                    <ReviewCard
+                      key={review.id}
+                      review={review}
+                      selected={selectedReview?.id === review.id}
+                      onClick={() => handleSelectReview(review)}
+                    />
+                  ))
+                )}
               </div>
-            ) : (
-              reviews.map((review) => (
-                <ReviewCard
-                  key={review.id}
-                  review={review}
-                  selected={selectedReview?.id === review.id}
-                  onClick={() => handleSelectReview(review)}
-                />
-              ))
-            )}
-          </div>
+            </>
+          ) : (
+            <div className="overflow-y-auto" style={{ maxHeight: "calc(100vh - 135px)" }}>
+              <ManualReviewForm onSubmit={handleManualSubmit} isAnalyzing={isStreaming} />
+            </div>
+          )}
         </aside>
 
         {/* ========== 右侧：分析面板 ========== */}
@@ -648,8 +846,6 @@ export default function HomePage() {
           />
         </main>
       </div>
-
-      
     </div>
   );
 }
