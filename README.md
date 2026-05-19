@@ -43,8 +43,8 @@
 <table>
   <tr>
     <td width="50%">
-      <h4>🤖 Automated Review Monitoring</h4>
-      Multi-strategy scraper that extracts reviews from Shopify stores via <b>JSON-LD</b>, <b>Judge.me</b>, and <b>generic HTML</b> — no API key needed. Automatically filters for reviews ≤3 stars.
+      <h4>🤖 Review Input</h4>
+      Two ways to get reviews: <b>Auto-scrape</b> from Shopify stores (JSON-LD / Judge.me / HTML) with no API key needed, or <b>manually paste</b> reviews from any platform (Amazon, Shopee, TikTok Shop, etc.). Automatically filters for ≤3 star reviews.
     </td>
     <td width="50%">
       <h4>🧠 AI Root-Cause Analysis</h4>
@@ -157,14 +157,15 @@ flowchart LR
 
 | Step | Component | What Happens |
 |------|-----------|-------------|
-| **① Scrape** | `scraper.py` | Fetches product page HTML, tries 3 strategies (JSON-LD → Judge.me → generic HTML) |
-| **② Filter** | `scraper.py` | Keeps only ≤3 star reviews, sorts by rating ascending |
-| **③ Store** | `scrape_routes.py` + `database.py` | Writes reviews to SQLite, deduplicates by (reviewer, content, product) |
-| **④ Analyze** | `main.py` + `ai_agent.py` | Sends review to DeepSeek with XML-tagged system prompt + country-specific localization |
-| **⑤ Stream** | `main.py` | FastAPI `StreamingResponse` forwards each LLM delta token as an SSE event |
-| **⑥ Display** | `page.tsx` | `useRecoveryStream` hook parses SSE events, renders typewriter animation, shows structured results |
-| **⑦ Persist** | `main.py` + `database.py` | After stream completes, saves analysis result to `analyses` table |
-| **⑧ Act** | `ActionBar` | Copy email to clipboard or trigger mock send |
+| **① Input** | `page.tsx` — `ManualReviewForm` | Paste review text from any platform, or scrape from Shopify URL |
+| **② Scrape** | `scraper.py` | Fetches product page HTML, tries 3 strategies (JSON-LD → Judge.me → generic HTML) |
+| **③ Filter** | `scraper.py` | Keeps only ≤3 star reviews, sorts by rating ascending |
+| **④ Store** | `scrape_routes.py` + `database.py` | Writes reviews to SQLite, deduplicates by (reviewer, content, product) |
+| **⑤ Analyze** | `main.py` + `ai_agent.py` | Sends review to DeepSeek with XML-tagged system prompt + country-specific localization |
+| **⑥ Stream** | `main.py` | FastAPI `StreamingResponse` forwards each LLM delta token as an SSE event |
+| **⑦ Display** | `page.tsx` | `useRecoveryStream` hook parses SSE events, renders typewriter animation, shows structured results |
+| **⑧ Persist** | `main.py` + `database.py` | After stream completes, saves analysis result to `analyses` table |
+| **⑨ Act** | `ActionBar` | Copy email to clipboard or trigger mock send |
 
 ---
 
@@ -215,7 +216,12 @@ npm run dev
 
 ### 5. Open the Dashboard
 
-Navigate to **http://localhost:3000**, select a review card from the left panel, and watch the AI generate a recovery email in real-time.
+Navigate to **http://localhost:3000**. Choose your input method:
+
+- **🔗 Scrape** — enter a Shopify product URL to auto-fetch reviews
+- **✏️ Manual** — paste a review directly from any platform
+
+Select a review card (or submit manual input) and watch the AI generate a recovery email in real-time.
 
 ### Configuration Reference
 

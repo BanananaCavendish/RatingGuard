@@ -1,3 +1,4 @@
+
 <p align="right">
   <a href="README.md">🇬🇧 English</a>
 </p>
@@ -43,8 +44,8 @@
 <table>
   <tr>
     <td width="50%">
-      <h4>🤖 自动差评监控</h4>
-      多策略爬虫从 Shopify 店铺中提取评价 —— 支持 <b>JSON-LD</b>、<b>Judge.me</b> 和 <b>通用 HTML</b> 三种解析方式，无需 API Key。自动过滤 ≤3 星的差评。
+      <h4>🤖 差评输入</h4>
+      两种方式获取差评：<b>自动爬取</b> Shopify 店铺（JSON-LD / Judge.me / HTML，无需 API Key），或从任意平台<b>手动粘贴</b>（亚马逊、虾皮、TikTok 等）。自动过滤 ≤3 星差评。
     </td>
     <td width="50%">
       <h4>🧠 AI 根因分析</h4>
@@ -157,14 +158,15 @@ flowchart LR
 
 | 步骤 | 组件 | 说明 |
 |------|------|------|
-| **① 爬取** | `scraper.py` | 获取产品页面 HTML，依次尝试 3 种策略（JSON-LD → Judge.me → 通用 HTML） |
-| **② 过滤** | `scraper.py` | 仅保留 ≤3 星的评价，按评分升序排列 |
-| **③ 存储** | `scrape_routes.py` + `database.py` | 将评价写入 SQLite，按（用户名、内容、商品）去重 |
-| **④ 分析** | `main.py` + `ai_agent.py` | 将评价发送至 DeepSeek，附带 XML 标签化系统提示词 + 目标国家本地化指令 |
-| **⑤ 流式传输** | `main.py` | FastAPI `StreamingResponse` 将每个 LLM delta token 转发为 SSE 事件 |
-| **⑥ 展示** | `page.tsx` | `useRecoveryStream` hook 解析 SSE 事件，渲染打字机动画，展示结构化结果 |
-| **⑦ 持久化** | `main.py` + `database.py` | 流完成后，将分析结果保存到 `analyses` 表 |
-| **⑧ 操作** | `ActionBar` | 复制邮件到剪贴板或触发模拟发送 |
+| **① 输入** | `page.tsx` — `ManualReviewForm` | 从任意平台粘贴差评文本，或从 Shopify URL 爬取 |
+| **② 爬取** | `scraper.py` | 获取产品页面 HTML，依次尝试 3 种策略（JSON-LD → Judge.me → 通用 HTML） |
+| **③ 过滤** | `scraper.py` | 仅保留 ≤3 星的评价，按评分升序排列 |
+| **④ 存储** | `scrape_routes.py` + `database.py` | 将评价写入 SQLite，按（用户名、内容、商品）去重 |
+| **⑤ 分析** | `main.py` + `ai_agent.py` | 将评价发送至 DeepSeek，附带 XML 标签化系统提示词 + 目标国家本地化指令 |
+| **⑥ 流式传输** | `main.py` | FastAPI `StreamingResponse` 将每个 LLM delta token 转发为 SSE 事件 |
+| **⑦ 展示** | `page.tsx` | `useRecoveryStream` hook 解析 SSE 事件，渲染打字机动画，展示结构化结果 |
+| **⑧ 持久化** | `main.py` + `database.py` | 流完成后，将分析结果保存到 `analyses` 表 |
+| **⑨ 操作** | `ActionBar` | 复制邮件到剪贴板或触发模拟发送 |
 
 ---
 
@@ -215,7 +217,12 @@ npm run dev
 
 ### 5. 打开面板
 
-在浏览器中打开 **http://localhost:3000**，从左侧面板选择一条差评，观看 AI 实时生成挽回邮件。
+在浏览器中打开 **http://localhost:3000**，选择输入方式：
+
+- **🔗 抓取** — 输入 Shopify 商品 URL 自动获取评价
+- **✏️ 手动输入** — 从任意平台直接粘贴差评文本
+
+选择一条差评（或提交手动输入），观看 AI 实时生成挽回邮件。
 
 ### 配置参考
 
