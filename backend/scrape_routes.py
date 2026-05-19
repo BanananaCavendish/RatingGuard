@@ -5,6 +5,7 @@ POST /api/scrape  — 接受商品 URL，运行爬虫，结果写入数据库
 """
 
 from urllib.parse import urlparse
+import asyncio
 
 from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel
@@ -54,10 +55,10 @@ async def scrape_product(body: ScrapeRequest, db=Depends(get_connection)):
     parsed = urlparse(url)
     domain = parsed.netloc or settings.shopify_domain
 
-    # 执行爬虫
+    # 执行爬虫（同步操作放到线程池，避免阻塞事件循环）
     scraper = ShopifyReviewScraper()
     try:
-        reviews = scraper.scrape_product(url)
+        reviews = await asyncio.to_thread(scraper.scrape_product, url)
     except Exception as e:
         logger.error("爬虫异常: %s", e, exc_info=True)
         raise HTTPException(

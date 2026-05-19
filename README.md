@@ -7,8 +7,12 @@
   <img src="https://img.shields.io/badge/Next.js-14-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" />
   <img src="https://img.shields.io/badge/FastAPI-0.115-009688?style=for-the-badge&logo=fastapi&logoColor=white" />
   <img src="https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" />
+  <img src="https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white" />
   <img src="https://img.shields.io/badge/DeepSeek-4F46E5?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTIgMkM2LjQ4IDIgMiA2LjQ4IDIgMTJzNC40OCAxMCAxMCAxMCAxMC00LjQ4IDEwLTEwUzE3LjUyIDIgMTIgMnptMCAxOGMtNC40MSAwLTgtMy41OS04LTggMC00LjQxIDMuNTktOCA4LThzOCAzLjU5IDggOC04IDMuNTktOCA4eiIgZmlsbD0id2hpdGUiLz48L3N2Zz4=&logoColor=white" />
   <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" />
+  <br />
+  <img src="https://img.shields.io/github/stars/2jy89j6f28-cmyk/ratingguard?style=social" />
+  <img src="https://img.shields.io/github/issues/2jy89j6f28-cmyk/ratingguard?style=social" />
 </p>
 
 <h1 align="center">🛡️ RatingGuard</h1>
@@ -86,6 +90,7 @@
         <li><b>Uvicorn</b> — ASGI server</li>
         <li><b>Requests</strong> + <strong>BeautifulSoup4</b> — Shopify scraping</li>
         <li><b>Pydantic</b> V2 — data modeling & validation</li>
+        <li><b>aiosqlite</b> — async SQLite persistence</li>
         <li><b>OpenAI SDK</b> — DeepSeek API client</li>
         <li><b>python-dotenv</b> — environment management</li>
       </ul>
@@ -121,19 +126,25 @@ flowchart LR
     A[🛍️ Shopify Store] -->|HTTP GET| B[🕷️ Scraper<br/>requests + BS4]
     B -->|JSON-LD / Judge.me / HTML| C[📋 Structured Reviews<br/>≤3 stars only]
 
-    C -->|review_text + country_code| D[🧠 AI Agent<br/>DeepSeek Flash]
-    D -->|System Prompt + Caching| E[📊 Analysis: reason, anger, persona]
-    D -->|Stream=True| F[✉️ Recovery Email<br/>Multi-language]
+    C --> D[💾 Database<br/>SQLite + aiosqlite]
+    D -->|GET /api/reviews| H[🌐 Next.js Frontend<br/>SaaS Dashboard]
 
-    E --> G[⚡ FastAPI SSE Endpoint<br/>/api/stream-recovery]
+    H -->|select review + POST /api/stream-recovery| G[⚡ FastAPI SSE Endpoint<br/>/api/stream-recovery]
+    G -->|review_text + country_code| E[🧠 AI Agent<br/>DeepSeek Flash]
+    E -->|System Prompt + Caching| F[📊 Analysis: reason, anger, persona]
+    E -->|Stream=True| I[✉️ Recovery Email<br/>Multi-language]
+
     F --> G
+    I --> G
 
-    G -->|SSE event stream| H[🌐 Next.js Frontend<br/>SaaS Dashboard]
-    H -->|token events| I[⌨️ Typewriter Effect]
-    H -->|done event| J[📋 Analysis Cards]
-    H -->|done event| K[📧 Email Preview]
-    K --> L[📋 Copy to Clipboard]
-    K --> M[✈️ Send Email (Mock)]
+    G -->|SSE event stream| H
+    H -->|token events| J[⌨️ Typewriter Effect]
+    H -->|done event| K[📋 Analysis Cards]
+    H -->|done event| L[📧 Email Preview]
+    L --> M[📋 Copy to Clipboard]
+    L --> N[✈️ Send Email (Mock)]
+
+    G -->|done + review_id| D
 
     style A fill:#1e293b,stroke:#3b82f6,color:#fff
     style B fill:#1e293b,stroke:#10b981,color:#fff
@@ -148,10 +159,12 @@ flowchart LR
 |------|-----------|-------------|
 | **① Scrape** | `scraper.py` | Fetches product page HTML, tries 3 strategies (JSON-LD → Judge.me → generic HTML) |
 | **② Filter** | `scraper.py` | Keeps only ≤3 star reviews, sorts by rating ascending |
-| **③ Analyze** | `ai_agent.py` | Sends review to DeepSeek with XML-tagged system prompt + country-specific localization |
-| **④ Stream** | `main.py` | FastAPI `StreamingResponse` forwards each LLM delta token as an SSE event |
-| **⑤ Display** | `page.tsx` | `useRecoveryStream` hook parses SSE events, renders typewriter animation, shows structured results |
-| **⑥ Act** | `ActionBar` | Copy email to clipboard or trigger mock send |
+| **③ Store** | `scrape_routes.py` + `database.py` | Writes reviews to SQLite, deduplicates by (reviewer, content, product) |
+| **④ Analyze** | `main.py` + `ai_agent.py` | Sends review to DeepSeek with XML-tagged system prompt + country-specific localization |
+| **⑤ Stream** | `main.py` | FastAPI `StreamingResponse` forwards each LLM delta token as an SSE event |
+| **⑥ Display** | `page.tsx` | `useRecoveryStream` hook parses SSE events, renders typewriter animation, shows structured results |
+| **⑦ Persist** | `main.py` + `database.py` | After stream completes, saves analysis result to `analyses` table |
+| **⑧ Act** | `ActionBar` | Copy email to clipboard or trigger mock send |
 
 ---
 
@@ -166,7 +179,7 @@ flowchart LR
 ### 1. Clone & Configure
 
 ```bash
-git clone https://github.com/yourusername/ratingguard.git
+git clone https://github.com/2jy89j6f28-cmyk/ratingguard.git
 cd ratingguard
 
 # Create environment file
@@ -219,7 +232,28 @@ Navigate to **http://localhost:3000**, select a review card from the left panel,
 | `DATABASE_PATH` | ❌ | `ratingguard.db` | SQLite database file path |
 | `CORS_ORIGINS` | ❌ | `http://localhost:3000` | Comma-separated allowed CORS origins |
 
+### Docker Deployment (Production)
+
+```bash
+# 1. Build and start all services
+docker-compose up --build
+
+# 2. Open the dashboard
+#    → http://localhost:3000
+
+# 3. Stop and clean up
+docker-compose down -v
+```
+
+The Docker setup includes:
+- **Backend** — Python 3.11-slim, Uvicorn with 4 workers, healthcheck
+- **Frontend** — Node 20-alpine, Next.js standalone output, production-optimized
+- **Persistent volume** — SQLite data survives container restarts
+- **Network** — Internal Docker network, frontend proxies `/api/*` to backend
+
 ---
+
+
 
 <h2 id="project-structure">📂 Project Structure</h2>
 
@@ -387,6 +421,8 @@ The system prompt, few-shot examples, JSON parser, and validation layer all rema
 - [x] DeepSeek AI integration with streaming
 - [x] Multi-language recovery emails (11 locales)
 - [x] SSE real-time SaaS dashboard
+- [x] Persistent SQLite storage (products / reviews / analyses)
+- [x] Docker deployment (docker-compose, multi-stage builds)
 - [ ] Amazon review scraping support
 - [ ] Batch review processing & scheduling
 - [ ] OAuth / JWT authentication
@@ -417,7 +453,7 @@ Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for more informa
 <p align="center">
   <b>Built with ❤️ for cross-border e-commerce sellers who refuse to lose customers to bad reviews.</b>
   <br />
-  <a href="https://github.com/yourusername/ratingguard/issues">Report Bug</a>
+  <a href="https://github.com/2jy89j6f28-cmyk/ratingguard/issues">Report Bug</a>
   ·
-  <a href="https://github.com/yourusername/ratingguard/issues">Request Feature</a>
+  <a href="https://github.com/2jy89j6f28-cmyk/ratingguard/issues">Request Feature</a>
 </p>

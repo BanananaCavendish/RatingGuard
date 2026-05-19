@@ -7,8 +7,12 @@
   <img src="https://img.shields.io/badge/Next.js-14-000000?style=for-the-badge&logo=nextdotjs&logoColor=white" />
   <img src="https://img.shields.io/badge/FastAPI-0.115-009688?style=for-the-badge&logo=fastapi&logoColor=white" />
   <img src="https://img.shields.io/badge/Tailwind_CSS-3.4-38B2AC?style=for-the-badge&logo=tailwind-css&logoColor=white" />
+  <img src="https://img.shields.io/badge/SQLite-003B57?style=for-the-badge&logo=sqlite&logoColor=white" />
   <img src="https://img.shields.io/badge/DeepSeek-4F46E5?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTIgMkM2LjQ4IDIgMiA2LjQ4IDIgMTJzNC40OCAxMCAxMCAxMCAxMC00LjQ4IDEwLTEwUzE3LjUyIDIgMTIgMnptMCAxOGMtNC40MSAwLTgtMy41OS04LTggMC00LjQxIDMuNTktOCA4LThzOCAzLjU5IDggOC04IDMuNTktOCA4eiIgZmlsbD0id2hpdGUiLz48L3N2Zz4=&logoColor=white" />
   <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" />
+  <br />
+  <img src="https://img.shields.io/github/stars/2jy89j6f28-cmyk/ratingguard?style=social" />
+  <img src="https://img.shields.io/github/issues/2jy89j6f28-cmyk/ratingguard?style=social" />
 </p>
 
 <h1 align="center">🛡️ RatingGuard</h1>
@@ -86,6 +90,7 @@
         <li><b>Uvicorn</b> — ASGI 服务器</li>
         <li><b>Requests</strong> + <strong>BeautifulSoup4</b> — Shopify 爬虫</li>
         <li><b>Pydantic</b> V2 — 数据建模与验证</li>
+        <li><b>aiosqlite</b> — 异步 SQLite 持久化</li>
         <li><b>OpenAI SDK</b> — DeepSeek API 客户端</li>
         <li><b>python-dotenv</b> — 环境变量管理</li>
       </ul>
@@ -121,19 +126,25 @@ flowchart LR
     A[🛍️ Shopify 店铺] -->|HTTP GET| B[🕷️ 爬虫<br/>requests + BS4]
     B -->|JSON-LD / Judge.me / HTML| C[📋 结构化评价<br/>仅 ≤3 星差评]
 
-    C -->|review_text + country_code| D[🧠 AI 智能体<br/>DeepSeek Flash]
-    D -->|系统提示词 + 缓存| E[📊 分析结果: 原因, 愤怒等级, 用户画像]
-    D -->|Stream=True| F[✉️ 挽回邮件<br/>多语言]
+    C --> D[💾 数据库<br/>SQLite + aiosqlite]
+    D -->|GET /api/reviews| H[🌐 Next.js 前端<br/>SaaS 面板]
 
-    E --> G[⚡ FastAPI SSE 端点<br/>POST /api/stream-recovery]
+    H -->|选择差评 + POST /api/stream-recovery| G[⚡ FastAPI SSE 端点]
+    G -->|review_text + country_code| E[🧠 AI 智能体<br/>DeepSeek Flash]
+    E -->|系统提示词 + 缓存| F[📊 分析结果: 原因, 愤怒等级, 用户画像]
+    E -->|Stream=True| I[✉️ 挽回邮件<br/>多语言]
+
     F --> G
+    I --> G
 
-    G -->|SSE 事件流| H[🌐 Next.js 前端<br/>SaaS 面板]
-    H -->|token 事件| I[⌨️ 打字机效果]
-    H -->|done 事件| J[📋 分析卡片]
-    H -->|done 事件| K[📧 邮件预览]
-    K --> L[📋 复制到剪贴板]
-    K --> M[✈️ 发送邮件 (模拟)]
+    G -->|SSE 事件流| H
+    H -->|token 事件| J[⌨️ 打字机效果]
+    H -->|done 事件| K[📋 分析卡片]
+    H -->|done 事件| L[📧 邮件预览]
+    L --> M[📋 复制到剪贴板]
+    L --> N[✈️ 发送邮件 (模拟)]
+
+    G -->|done + review_id| D
 
     style A fill:#1e293b,stroke:#3b82f6,color:#fff
     style B fill:#1e293b,stroke:#10b981,color:#fff
@@ -148,10 +159,12 @@ flowchart LR
 |------|------|------|
 | **① 爬取** | `scraper.py` | 获取产品页面 HTML，依次尝试 3 种策略（JSON-LD → Judge.me → 通用 HTML） |
 | **② 过滤** | `scraper.py` | 仅保留 ≤3 星的评价，按评分升序排列 |
-| **③ 分析** | `ai_agent.py` | 将评价发送至 DeepSeek，附带 XML 标签化系统提示词 + 目标国家本地化指令 |
-| **④ 流式传输** | `main.py` | FastAPI `StreamingResponse` 将每个 LLM delta token 转发为 SSE 事件 |
-| **⑤ 展示** | `page.tsx` | `useRecoveryStream` hook 解析 SSE 事件，渲染打字机动画，展示结构化结果 |
-| **⑥ 操作** | `ActionBar` | 复制邮件到剪贴板或触发模拟发送 |
+| **③ 存储** | `scrape_routes.py` + `database.py` | 将评价写入 SQLite，按（用户名、内容、商品）去重 |
+| **④ 分析** | `main.py` + `ai_agent.py` | 将评价发送至 DeepSeek，附带 XML 标签化系统提示词 + 目标国家本地化指令 |
+| **⑤ 流式传输** | `main.py` | FastAPI `StreamingResponse` 将每个 LLM delta token 转发为 SSE 事件 |
+| **⑥ 展示** | `page.tsx` | `useRecoveryStream` hook 解析 SSE 事件，渲染打字机动画，展示结构化结果 |
+| **⑦ 持久化** | `main.py` + `database.py` | 流完成后，将分析结果保存到 `analyses` 表 |
+| **⑧ 操作** | `ActionBar` | 复制邮件到剪贴板或触发模拟发送 |
 
 ---
 
@@ -166,7 +179,7 @@ flowchart LR
 ### 1. 克隆与配置
 
 ```bash
-git clone https://github.com/yourusername/ratingguard.git
+git clone https://github.com/2jy89j6f28-cmyk/ratingguard.git
 cd ratingguard
 
 # 创建环境变量文件
@@ -218,6 +231,25 @@ npm run dev
 | `SCRAPER_REQUEST_DELAY_MAX` | ❌ | `5.0` | 请求最大延迟（秒） |
 | `DATABASE_PATH` | ❌ | `ratingguard.db` | SQLite 数据库文件路径 |
 | `CORS_ORIGINS` | ❌ | `http://localhost:3000` | 逗号分隔的允许 CORS 来源 |
+
+### Docker 部署（生产环境）
+
+```bash
+# 1. 构建并启动所有服务
+docker-compose up --build
+
+# 2. 打开面板
+#    → http://localhost:3000
+
+# 3. 停止并清理
+docker-compose down -v
+```
+
+Docker 配置包含：
+- **后端** — Python 3.11-slim，Uvicorn 多进程，健康检查探针
+- **前端** — Node 20-alpine，Next.js standalone 构建，生产优化
+- **持久化卷** — SQLite 数据在容器重启后不丢失
+- **网络** — Docker 内部网络，前端自动代理 `/api/*` 到后端
 
 ---
 
@@ -387,6 +419,8 @@ class ClaudeDriver(LLMDriver):
 - [x] DeepSeek AI 集成与流式传输
 - [x] 多语言挽回邮件（11 个区域）
 - [x] SSE 实时 SaaS 面板
+- [x] SQLite 持久化存储（商品 / 评价 / 分析）
+- [x] Docker 一键部署（docker-compose、多阶段构建）
 - [ ] Amazon 评价爬取支持
 - [ ] 批量评价处理与定时调度
 - [ ] OAuth / JWT 身份认证
@@ -417,7 +451,7 @@ class ClaudeDriver(LLMDriver):
 <p align="center">
   <b>为跨境电商卖家打造 —— 不让任何一条差评白白流失客户。</b>
   <br />
-  <a href="https://github.com/yourusername/ratingguard/issues">报告 Bug</a>
+  <a href="https://github.com/2jy89j6f28-cmyk/ratingguard/issues">报告 Bug</a>
   ·
-  <a href="https://github.com/yourusername/ratingguard/issues">请求功能</a>
+  <a href="https://github.com/2jy89j6f28-cmyk/ratingguard/issues">请求功能</a>
 </p>
