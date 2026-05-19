@@ -11,8 +11,8 @@
   <img src="https://img.shields.io/badge/DeepSeek-4F46E5?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTIgMkM2LjQ4IDIgMiA2LjQ4IDIgMTJzNC40OCAxMCAxMCAxMCAxMC00LjQ4IDEwLTEwUzE3LjUyIDIgMTIgMnptMCAxOGMtNC40MSAwLTgtMy41OS04LTggMC00LjQxIDMuNTktOCA4LThzOCAzLjU5IDggOC04IDMuNTktOCA4eiIgZmlsbD0id2hpdGUiLz48L3N2Zz4=&logoColor=white" />
   <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" />
   <br />
-  <img src="https://img.shields.io/github/stars/2jy89j6f28-cmyk/ratingguard?style=social" />
-  <img src="https://img.shields.io/github/issues/2jy89j6f28-cmyk/ratingguard?style=social" />
+  <img src="https://img.shields.io/github/stars/BanananaCavendish/ratingguard?style=social" />
+  <img src="https://img.shields.io/github/issues/BanananaCavendish/ratingguard?style=social" />
 </p>
 
 <h1 align="center">🛡️ RatingGuard</h1>
@@ -180,7 +180,7 @@ flowchart LR
 ### 1. Clone & Configure
 
 ```bash
-git clone https://github.com/2jy89j6f28-cmyk/ratingguard.git
+git clone https://github.com/BanananaCavendish/ratingguard.git
 cd ratingguard
 
 # Create environment file
@@ -459,7 +459,7 @@ Distributed under the **MIT License**. See [`LICENSE`](LICENSE) for more informa
 <p align="center">
   <b>Built with ❤️ for cross-border e-commerce sellers who refuse to lose customers to bad reviews.</b>
   <br />
-  <a href="https://github.com/2jy89j6f28-cmyk/ratingguard/issues">Report Bug</a>
+  <a href="https://github.com/BanananaCavendish/ratingguard/issues">Report Bug</a>
   ·
-  <a href="https://github.com/2jy89j6f28-cmyk/ratingguard/issues">Request Feature</a>
+  <a href="https://github.com/BanananaCavendish/ratingguard/issues">Request Feature</a>
 </p>

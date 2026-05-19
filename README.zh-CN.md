@@ -12,8 +12,8 @@
   <img src="https://img.shields.io/badge/DeepSeek-4F46E5?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTIgMkM2LjQ4IDIgMiA2LjQ4IDIgMTJzNC40OCAxMCAxMCAxMCAxMC00LjQ4IDEwLTEwUzE3LjUyIDIgMTIgMnptMCAxOGMtNC40MSAwLTgtMy41OS04LTggMC00LjQxIDMuNTktOCA4LThzOCAzLjU5IDggOC04IDMuNTktOCA4eiIgZmlsbD0id2hpdGUiLz48L3N2Zz4=&logoColor=white" />
   <img src="https://img.shields.io/badge/license-MIT-green?style=for-the-badge" />
   <br />
-  <img src="https://img.shields.io/github/stars/2jy89j6f28-cmyk/ratingguard?style=social" />
-  <img src="https://img.shields.io/github/issues/2jy89j6f28-cmyk/ratingguard?style=social" />
+  <img src="https://img.shields.io/github/stars/BanananaCavendish/ratingguard?style=social" />
+  <img src="https://img.shields.io/github/issues/BanananaCavendish/ratingguard?style=social" />
 </p>
 
 <h1 align="center">🛡️ RatingGuard</h1>
@@ -181,7 +181,7 @@ flowchart LR
 ### 1. 克隆与配置
 
 ```bash
-git clone https://github.com/2jy89j6f28-cmyk/ratingguard.git
+git clone https://github.com/BanananaCavendish/ratingguard.git
 cd ratingguard
 
 # 创建环境变量文件
@@ -458,7 +458,7 @@ class ClaudeDriver(LLMDriver):
 <p align="center">
   <b>为跨境电商卖家打造 —— 不让任何一条差评白白流失客户。</b>
   <br />
-  <a href="https://github.com/2jy89j6f28-cmyk/ratingguard/issues">报告 Bug</a>
+  <a href="https://github.com/BanananaCavendish/ratingguard/issues">报告 Bug</a>
   ·
-  <a href="https://github.com/2jy89j6f28-cmyk/ratingguard/issues">请求功能</a>
+  <a href="https://github.com/BanananaCavendish/ratingguard/issues">请求功能</a>
 </p>
